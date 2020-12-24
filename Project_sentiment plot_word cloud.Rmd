@@ -1,0 +1,100 @@
+---
+title: "Project_sentiment plot_word cloud"
+output: html_document
+---
+
+```{Importing library}
+setwd("C:/Users/user/Documents/HKUST/Sosc4300/Group pro")
+setwd("C:/Users/user/Documents/HKUST/Sosc4300/Group pro/tweets_analysis_hkprotests_2019/data/raw")
+library(glmnet)
+library(ggplot2)
+library(foreign)
+library(tidytext)
+library(dplyr)
+library(dbplyr)
+library(quanteda)
+library(data.table)
+install.packages("tm")
+library(tm)
+install.packages("RWeka")
+library(RWeka)
+install.packages("wordcloud")
+library(wordcloud)
+library(lubridate)
+text <- fread("clean_raw_text.csv", stringsAsFactors = FALSE, header = FALSE, encoding = "UTF-8")
+hashtags <- fread("clean_raw_hashtags.csv",stringsAsFactors = FALSE, header = FALSE, encoding = "UTF-8")
+```
+
+
+
+```{Constructing Document term matrix}
+twcorpus_text <- corpus(text$V2)
+doc.term_text <- dfm(twcorpus_text,  ngrams=1:3, tolower=TRUE, stem=TRUE, remove_punct = TRUE, 
+                remove_url=TRUE,  verbose=TRUE, 
+                remove=c(stopwords("english"),"hong","kong","hongkong","the","human"))
+
+textplot_wordcloud(doc.term_text, rotation=0, min_size=1, max_size=5, max_words=100)
+
+twcorpus_tag <- corpus(hashtags$V2)
+doc.term_tag <- dfm(twcorpus_tag,  ngrams=1:3, tolower=TRUE, stem=TRUE, remove_punct = TRUE, 
+                     remove_url=TRUE,  verbose=TRUE, 
+                     remove=c(stopwords("english")))
+
+textplot_wordcloud(doc.term_text, rotation=0, min_size=1, max_size=5, max_words=100)
+
+```
+
+
+```{Tweets Text Word Cloud}
+text_text <- paste(text$V2, collapse = " ")
+text_vector <- VectorSource(text_text)
+text_corpus <- Corpus(text_vector)
+dtm <- DocumentTermMatrix(text_corpus)
+dtm_matrix <- as.matrix(dtm)
+text_freq <- colSums(dtm_matrix)
+text_freq <- sort(text_freq,decreasing = TRUE)
+head(text_freq)
+text_freq[1:100]
+
+textplot_wordcloud(dtm_matrix, rotation=0, min_size=1, max_size=5, max_words=100)
+words <- names(text_freq)
+wordcloud(words[1:100], text_freq[1:100])
+```
+
+
+```{Hashtags Word Cloud}
+hash_text <- paste(hashtags$V2, collapse = " ")
+hash_vector <- VectorSource(hash_text)
+hash_corpus <- Corpus(hash_vector)
+dtm <- DocumentTermMatrix(hash_corpus)
+dtm_matrix <- as.matrix(dtm)
+hash_freq <- colSums(dtm_matrix)
+hash_freq <- sort(hash_freq,decreasing = TRUE)
+head(hash_freq)
+hash_freq[1:100]
+x <- hash_freq[1:20]
+hash_table <- table(x)
+##textplot_wordcloud(dtm_matrix, rotation=0, min_size=1, max_size=5, max_words=100)
+words <- names(hash_freq)
+wordcloud(words[1:100], hash_freq[1:100],min)
+
+
+```
+
+```{Sentiment Test by dates plot}
+date_sen_cat <- fread("date_sen_cat.csv")
+
+cat_table <- table(date_sen_cat$sentiment_class,date_sen_cat$dt_date)
+View(cat_table)
+plot <- ggplot(as.data.frame(cat_table), aes(x=Var2,y=Freq,fill = 
+              Var1)) + geom_histogram(stat = "identity",
+                                      show.legend = TRUE,position="fill") + 
+  scale_x_discrete(guide = guide_axis(n.dodge=3))+ggtitle("Sentiment by dates") +
+  xlab("Date") + ylab("Quantity")+ labs(fill = "Sentiment class") 
+plot
+
+plot <- ggplot(as.data.frame(cat_table), aes(x=Var1,y=Freq)) + geom_histogram(stat = "identity")+ylim(0,140000)
+plot
+
+```
+
