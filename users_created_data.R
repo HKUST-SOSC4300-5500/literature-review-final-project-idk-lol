@@ -1,0 +1,42 @@
+
+
+x1<- read.csv("20191103_131218_sahkprotests_tweets.csv")
+x2<- read.csv("20191103_153932_sahkprotests_tweets.csv")
+x3<- read.csv("20191105_010011_sahkprotests_tweets.csv")
+x4<- read.csv("20191105_222815_sahkprotests_tweets.csv")
+x5<- read.csv("20191107_000333_sahkprotests_tweets.csv")
+x6<- read.csv("20191108_001436_sahkprotests_tweets.csv")
+x7<- read.csv("20191109_030106_sahkprotests_tweets.csv")
+x8<- read.csv("20191109_120954_sahkprotests_tweets.csv")
+x9<- read.csv("20191110_021422_sahkprotests_tweets.csv")
+x10<- read.csv("20191110_134433_sahkprotests_tweets.csv")
+x11<- read.csv("20191111_223912_sahkprotests_tweets.csv")
+x12<- read.csv("20191112_231846_sahkprotests_tweets.csv")
+x13<- read.csv("20191113_225544_sahkprotests_tweets.csv")
+x14<- read.csv("20191115_000508_sahkprotests_tweets.csv")
+x15<- read.csv("20191116_121136_sahkprotests_tweets.csv")
+x16<- read.csv("20191117_001011_sahkprotests_tweets.csv")
+x17<- read.csv("20191120_015710_sahkprotests_tweets.csv")
+x18<- read.csv("20191120_235609_sahkprotests_tweets.csv")
+
+data <- rbind(x1, x2, x3, x4, x5, x6, x7, x8, x9,x10,x11,x12,x13,x14, x15, x16, x17,x18)
+
+
+data_raymand <- read.csv("clean_raw.csv")
+
+
+data$usercreatedts_new <- as.Date(data$usercreatedts, "%Y-%m-%d %H:%M:%S")
+
+library(scales) 
+library(ggplot2)
+ggplot(data[data$usercreatedts_new>"2019-06-01",] , aes(x=usercreatedts_new)) + geom_freqpoly( )+
+  scale_x_date(labels = date_format("%b-%d"), breaks ="2 week")+
+  ggtitle("Frequency of Users Created Date")+
+  ylab("frequency")+
+  xlab("date")
+
+data$after_june<- ifelse(data$usercreatedts_new>"2019-06-01",1,0)
+prop.table(table(data$after_june))
+
+
+
