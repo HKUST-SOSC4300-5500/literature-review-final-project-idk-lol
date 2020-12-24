@@ -1,0 +1,67 @@
+user_most_followers <- read.csv("C:/Users/Angela/Downloads/user_most_followers.csv", encoding="UTF-8")
+View(user_most_followers)
+workingarea<-user_most_followers[ which(user_most_followers$noFollowers > 299), ]
+#Limiting the sample to people with more than 300 followers
+populationsample <- workingarea[sample(1:nrow(workingarea), 1500,replace=FALSE),]
+install.packages("twitteR")
+library(twitteR)
+install.packages("C:/Users/Angela/Downloads/rtweet_0.7.0 (2).tar.gz", repos = NULL, type = "source")
+library(rtweet)
+install.packages("ggplot2")
+library(ggplot2)
+install.packages("dplyr")
+library(dplyr)
+install.packages("tidytext")
+library(tidytext)
+install.packages("C:/Users/Angela/Downloads/rowr_1.1.3.tar.gz", repos = NULL, type = "source")
+library(rowr)
+consumerKey<-'nZivUGsNehaho5Xwlf6gtffG0'
+consumerSecret<-"jpC2fCgG07RiowfMjeDP4HEPZppf6ivzYVsSkRQVoEfAV3Q8at"
+accessToken<-"2911053859-B4EXxYqJQ0dlgf4fu6LvXYL2Az2AnOeabKhGQ2a"
+accessTokenSecret<-"U2ynW5VR2c8qukdjXlDK0UDw45pqre2pZPSXhZBJBkjuU"
+setup_twitter_oauth(consumerKey,consumerSecret,accessToken,accessTokenSecret)
+#setting up the access token for twitter API
+onetothreehundard<-1:300
+followerlist<-data.frame(matrix(ncol=0,nrow=300))
+followerlist[,1]<-onetothreehundard
+for(i in 1:1500){
+  temp <- get_followers(populationsample[i,4],n=300,page = "-1", retryonratelimit = TRUE, parse = TRUE,verbose = TRUE,token = NULL)
+  colnames(temp)<-as.character(populationsample[i,4])
+  followerlist<-cbind.fill(followerlist,temp,fill = NA)
+}
+#get the list of followers of the selected users
+work<-followerlist[colSums(!is.na(followerlist)) > 0]
+work <- work[c(-1)]
+for (i in 1:1200){
+  work[,i] <- as.factor(work[,i])
+}
+ramdomNum<-sample(1:1200,300,replace = FALSE)
+work<-work[ramdomNum]
+#random sample of 300 from the retrived lists 
+edges=data.frame(matrix(ncol=3,nrow=0))
+colnames(edges) <- c("from", "to", "weight")
+edges$from<-as.character(edges$from)
+edges$to<-as.character(edges$to)
+#turning the data frame into a specific format
+for (i in 1:1200){
+  for(j in 1:1200){
+    if(i==j){
+      next
+    }
+    edges <- rbind(edges,c(names(work)[i],names(work)[j],length(intersect(work[,i],work[,j]))))
+  }
+}
+#getting edges weight 
+colnames(edges) <- c("from", "to", "weight")
+# naming the table in a particular format so that the igraph can read 
+edgess <- edges[ which(edges$weight > 0), ]
+# eliminating 0 edges
+install.packages("igraph")
+library(igraph)
+g <- graph_from_data_frame(edgess, directed = FALSE)
+lc <- cluster_louvain(g)
+#using louvain community detection method
+plot(lc, g)
+membership(lc)
+communities(lc)
+#getting the list of membership within each community and the list of community 
